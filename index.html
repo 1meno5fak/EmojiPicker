@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>🏆 لعبة الفوز والخسارة</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Cairo', sans-serif;
+      background: linear-gradient(135deg, #f6d365, #fda085);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: start;
+      height: 100vh;
+      margin: 0;
+      padding: 10px;
+      user-select: none;
+    }
+    h1 {
+      margin: 10px 0;
+      color: #fff;
+      text-shadow: 1px 1px 3px #00000030;
+    }
+    #startScreen, #gameUI {
+      width: 100%;
+      max-width: 500px;
+    }
+    #startScreen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    #startBtn, #retryBtn {
+      padding: 15px 30px;
+      font-size: 1.5rem;
+      background-color: #55efc4;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: 0.3s;
+      margin-top: 20px;
+    }
+    #startBtn:hover, #retryBtn:hover {
+      background-color: #00cec9;
+      color: white;
+    }
+    #gameUI {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+    }
+    #task {
+      font-size: 1.5rem;
+      background: #ffffff40;
+      padding: 10px 20px;
+      border-radius: 15px;
+      margin: 10px;
+      color: white;
+    }
+    #emojis {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .emoji-btn {
+      font-size: 3rem;
+      padding: 20px;
+      border: none;
+      border-radius: 14px;
+      background: #ffeaa7;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .emoji-btn:hover {
+      background: #fab1a0;
+    }
+    .emoji-btn:active {
+      transform: scale(0.9);
+    }
+    #info {
+      font-size: 1.2rem;
+      background: #dfe6e9;
+      padding: 10px 20px;
+      border-radius: 10px;
+      color: #2d3436;
+      margin-bottom: 10px;
+    }
+    #result {
+      font-size: 1.2rem;
+      color: #2d3436;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- شاشة البداية -->
+  <div id="startScreen">
+    <h1>🏆 اضغط الإيموجي الصحيح!</h1>
+    <button id="startBtn">ابدأ اللعبة</button>
+  </div>
+
+  <!-- واجهة اللعبة -->
+  <div id="gameUI">
+    <h1>المستوى <span id="level">1</span></h1>
+    <div id="task">اضغط على: <span id="targetEmoji"></span></div>
+    <div id="emojis"></div>
+    <div id="info">⏱ الوقت: <span id="timer">5</span> | ⭐ النقاط: <span id="score">0</span></div>
+    <div id="result"></div>
+    <button id="retryBtn">🔄 إعادة المحاولة</button>
+  </div>
+
+  <!-- أصوات الفوز والخسارة -->
+  <audio id="winSound" src="win.mp3" preload="auto"></audio>
+  <audio id="loseSound" src="lose.mp3" preload="auto"></audio>
+
+<script defer>
+  const emojis = ['😺','😡','😎','🐸','🐱','🤖','👻','🍕','⚽','🎮','🐵','🐶','🦄','🌟','🔥','🍀','🎲','🚀','🌈','🍩'];
+
+  let target = '', timeLeft = 5, score = 0, level = 1, timerInterval;
+
+  const startScreen = document.getElementById('startScreen');
+  const gameUI = document.getElementById('gameUI');
+  const startBtn = document.getElementById('startBtn');
+  const levelSpan = document.getElementById('level');
+  const targetEmojiSpan = document.getElementById('targetEmoji');
+  const emojisDiv = document.getElementById('emojis');
+  const timerSpan = document.getElementById('timer');
+  const scoreSpan = document.getElementById('score');
+  const resultDiv = document.getElementById('result');
+  const retryBtn = document.getElementById('retryBtn');
+
+  const winSound = document.getElementById('winSound');
+  const loseSound = document.getElementById('loseSound');
+
+  startBtn.addEventListener('click', () => {
+    startScreen.style.display = 'none';
+    gameUI.style.display = 'flex';
+    score = 0;
+    level = 1;
+    scoreSpan.textContent = score;
+    levelSpan.textContent = level;
+    startRound();
+  });
+
+  retryBtn.addEventListener('click', () => {
+    score = 0;
+    level = 1;
+    scoreSpan.textContent = score;
+    levelSpan.textContent = level;
+    startRound();
+  });
+
+  function getNumberOfChoices() {
+    return Math.min(4 + level, 10);
+  }
+
+  function getRandomEmojis(exclude, count) {
+    let options = emojis.filter(e => e !== exclude);
+    let selected = [];
+    while (selected.length < count - 1) {
+      let rand = options[Math.floor(Math.random() * options.length)];
+      if (!selected.includes(rand)) selected.push(rand);
+    }
+    selected.push(exclude);
+    return shuffle(selected);
+  }
+
+  function shuffle(arr) {
+    for (let i = arr.length -1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function playWin() {
+    winSound.currentTime = 0;
+    winSound.play();
+  }
+
+  function playLose() {
+    loseSound.currentTime = 0;
+    loseSound.play();
+  }
+
+  function startRound() {
+    retryBtn.style.display = 'none';
+    resultDiv.textContent = '';
+    timeLeft = 5;
+    timerSpan.textContent = timeLeft;
+
+    target = emojis[Math.floor(Math.random() * emojis.length)];
+    targetEmojiSpan.textContent = target;
+
+    emojisDiv.innerHTML = '';
+    let count = getNumberOfChoices();
+    let choices = getRandomEmojis(target, count);
+    let size = 4.5 - (count - 4) * 0.25;
+    size = Math.max(size, 2.2);
+
+    choices.forEach(e => {
+      const btn = document.createElement('button');
+      btn.className = 'emoji-btn';
+      btn.textContent = e;
+      btn.style.fontSize = `${size}rem`;
+      btn.style.padding = `${10 + (size * 2)}px`;
+      btn.addEventListener('click', () => {
+        if (e === target) {
+          playWin();
+          score++;
+          scoreSpan.textContent = score;
+          resultDiv.style.color = '#2ecc71';
+          resultDiv.textContent = '👏 صحيح!';
+          clearInterval(timerInterval);
+          if (score % 3 === 0) {
+            level++;
+            levelSpan.textContent = level;
+          }
+          setTimeout(startRound, 800);
+        } else {
+          playLose();
+          resultDiv.style.color = '#d63031';
+          resultDiv.textContent = '❌ خطأ!';
+          clearInterval(timerInterval);
+          retryBtn.style.display = 'inline-block';
+        }
+      });
+      emojisDiv.appendChild(btn);
+    });
+
+    clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      timeLeft--;
+      timerSpan.textContent = timeLeft;
+      if (timeLeft === 0) {
+        playLose();
+        clearInterval(timerInterval);
+        resultDiv.style.color = '#d63031';
+        resultDiv.textContent = `⏰ انتهى الوقت! كانت: ${target}`;
+        retryBtn.style.display = 'inline-block';
+      }
+    }, 1000);
+  }
+</script>
+
+</body>
+</html>
