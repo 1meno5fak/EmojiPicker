@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>🎵 لعبة الأصوات</title>
+  <title>🎵 لعبة الإيموجي</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600&display=swap" rel="stylesheet">
   <style>
     body {
@@ -84,6 +84,13 @@
     .emoji-btn:active {
       transform: scale(0.9);
     }
+    .emoji-move {
+      animation: wiggle 0.6s ease-in-out infinite alternate;
+    }
+    @keyframes wiggle {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(5px); }
+    }
     #info {
       font-size: 1.2rem;
       background: #dfe6e9;
@@ -91,6 +98,13 @@
       border-radius: 10px;
       color: #2d3436;
       margin-bottom: 10px;
+    }
+    #extraMessage {
+      font-size: 1rem;
+      color: white;
+      font-weight: bold;
+      margin-top: 5px;
+      display: none;
     }
     #result {
       font-size: 1.2rem;
@@ -101,28 +115,30 @@
 </head>
 <body>
 
-  <!-- شاشة البداية -->
   <div id="startScreen">
     <h1>🎵 اضغط الإيموجي الصحيح!</h1>
     <button id="startBtn">ابدأ اللعبة</button>
   </div>
 
-  <!-- واجهة اللعبة -->
   <div id="gameUI">
     <h1>المستوى <span id="level">1</span></h1>
     <div id="task">اضغط على: <span id="targetEmoji"></span></div>
     <div id="emojis"></div>
     <div id="info">⏱ الوقت: <span id="timer">5</span> | ⭐ النقاط: <span id="score">0</span></div>
+    <div id="extraMessage">✨ تم إضافة حركة الإيموجيز!</div>
     <div id="result"></div>
     <button id="retryBtn">🔄 إعادة المحاولة</button>
   </div>
 
-  <!-- الأصوات -->
   <audio id="winSound" src="win.mp3" preload="auto"></audio>
   <audio id="loseSound" src="lose.mp3" preload="auto"></audio>
 
 <script defer>
-  const emojis = ['😺','😡','😎','🐸','🐱','🤖','👻','🍕','⚽','🎮','🐵','🐶','🦄','🌟','🔥','🍀','🎲','🚀','🌈','🍩'];
+  const emojiGroups = {
+    easy: ['😀','😂','😎','👻','🍕','⚽','🎮','🚀','🌈','🍩'],
+    medium: ['🐶','🐕','🐩','🐾','🐱','🐈','😺','🐵','🐸','🐷'],
+    hard: ['🌝','🌞','🌚','🌕','🌙','🍎','🍏','🍐','👨‍🦰','👨‍🦱','👨‍🦲','👨‍🦳']
+  };
 
   let target = '', timeLeft = 5, score = 0, level = 1, timerInterval;
 
@@ -136,11 +152,15 @@
   const scoreSpan = document.getElementById('score');
   const resultDiv = document.getElementById('result');
   const retryBtn = document.getElementById('retryBtn');
+  const extraMessage = document.getElementById('extraMessage');
 
   const winSound = document.getElementById('winSound');
   const loseSound = document.getElementById('loseSound');
 
   startBtn.addEventListener('click', () => {
+    winSound.play().then(() => winSound.pause());
+    loseSound.play().then(() => loseSound.pause());
+
     startScreen.style.display = 'none';
     gameUI.style.display = 'flex';
     score = 0;
@@ -158,15 +178,21 @@
     startRound();
   });
 
+  function getEmojiPool() {
+    if (level < 3) return emojiGroups.easy;
+    if (level < 5) return emojiGroups.easy.concat(emojiGroups.medium);
+    return emojiGroups.easy.concat(emojiGroups.medium, emojiGroups.hard);
+  }
+
   function getNumberOfChoices() {
-    return Math.min(4 + level, 10);
+    return 4 + level; // لا حد أقصى
   }
 
   function getRandomEmojis(exclude, count) {
-    let options = emojis.filter(e => e !== exclude);
+    let pool = getEmojiPool().filter(e => e !== exclude);
     let selected = [];
     while (selected.length < count - 1) {
-      let rand = options[Math.floor(Math.random() * options.length)];
+      let rand = pool[Math.floor(Math.random() * pool.length)];
       if (!selected.includes(rand)) selected.push(rand);
     }
     selected.push(exclude);
@@ -181,46 +207,64 @@
     return arr;
   }
 
+  function disableAllButtons() {
+    const buttons = document.querySelectorAll('.emoji-btn');
+    buttons.forEach(btn => {
+      btn.disabled = true;
+      btn.style.opacity = '0.5';
+      btn.style.cursor = 'not-allowed';
+    });
+  }
+
   function startRound() {
     retryBtn.style.display = 'none';
     resultDiv.textContent = '';
     timeLeft = 5;
     timerSpan.textContent = timeLeft;
 
-    target = emojis[Math.floor(Math.random() * emojis.length)];
+    extraMessage.style.display = (level >= 15 && level <= 20) ? 'block' : 'none';
+
+    let emojiPool = getEmojiPool();
+    target = emojiPool[Math.floor(Math.random() * emojiPool.length)];
     targetEmojiSpan.textContent = target;
 
     emojisDiv.innerHTML = '';
     let count = getNumberOfChoices();
     let choices = getRandomEmojis(target, count);
     let size = 4.5 - (count - 4) * 0.25;
-    size = Math.max(size, 2.2);
+    size = Math.max(size, 1.5);
 
     choices.forEach(e => {
       const btn = document.createElement('button');
       btn.className = 'emoji-btn';
+      if (level >= 15 && level <= 20) {
+        btn.classList.add('emoji-move');
+      }
       btn.textContent = e;
       btn.style.fontSize = `${size}rem`;
       btn.style.padding = `${10 + (size * 2)}px`;
       btn.addEventListener('click', () => {
         if (e === target) {
+          winSound.currentTime = 0;
+          winSound.play();
           score++;
           scoreSpan.textContent = score;
           resultDiv.style.color = '#2ecc71';
           resultDiv.textContent = '👏 صحيح!';
           clearInterval(timerInterval);
-          winSound.play();
           if (score % 3 === 0) {
             level++;
             levelSpan.textContent = level;
           }
           setTimeout(startRound, 800);
         } else {
+          loseSound.currentTime = 0;
+          loseSound.play();
           resultDiv.style.color = '#d63031';
           resultDiv.textContent = '❌ خطأ!';
           clearInterval(timerInterval);
-          loseSound.play();
           retryBtn.style.display = 'inline-block';
+          disableAllButtons();
         }
       });
       emojisDiv.appendChild(btn);
@@ -232,18 +276,12 @@
       timerSpan.textContent = timeLeft;
       if (timeLeft === 0) {
         clearInterval(timerInterval);
+        loseSound.currentTime = 0;
+        loseSound.play();
         resultDiv.style.color = '#d63031';
         resultDiv.textContent = `⏰ انتهى الوقت! كانت: ${target}`;
-        loseSound.play();
         retryBtn.style.display = 'inline-block';
-      }
-    }, 1000);
-  }
-</script>
-
-</body>
-</html>     resultDiv.textContent = `⏰ انتهى الوقت! كانت: ${target}`;
-        retryBtn.style.display = 'inline-block';
+        disableAllButtons();
       }
     }, 1000);
   }
