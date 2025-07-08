@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>🏆 لعبة الفوز والخسارة</title>
+  <title>🎵 لعبة الأصوات</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600&display=swap" rel="stylesheet">
   <style>
     body {
@@ -103,7 +103,7 @@
 
   <!-- شاشة البداية -->
   <div id="startScreen">
-    <h1>🏆 اضغط الإيموجي الصحيح!</h1>
+    <h1>🎵 اضغط الإيموجي الصحيح!</h1>
     <button id="startBtn">ابدأ اللعبة</button>
   </div>
 
@@ -117,7 +117,7 @@
     <button id="retryBtn">🔄 إعادة المحاولة</button>
   </div>
 
-  <!-- أصوات الفوز والخسارة -->
+  <!-- الأصوات -->
   <audio id="winSound" src="win.mp3" preload="auto"></audio>
   <audio id="loseSound" src="lose.mp3" preload="auto"></audio>
 
@@ -181,16 +181,6 @@
     return arr;
   }
 
-  function playWin() {
-    winSound.currentTime = 0;
-    winSound.play();
-  }
-
-  function playLose() {
-    loseSound.currentTime = 0;
-    loseSound.play();
-  }
-
   function startRound() {
     retryBtn.style.display = 'none';
     resultDiv.textContent = '';
@@ -214,22 +204,22 @@
       btn.style.padding = `${10 + (size * 2)}px`;
       btn.addEventListener('click', () => {
         if (e === target) {
-          playWin();
           score++;
           scoreSpan.textContent = score;
           resultDiv.style.color = '#2ecc71';
           resultDiv.textContent = '👏 صحيح!';
           clearInterval(timerInterval);
+          winSound.play();
           if (score % 3 === 0) {
             level++;
             levelSpan.textContent = level;
           }
           setTimeout(startRound, 800);
         } else {
-          playLose();
           resultDiv.style.color = '#d63031';
           resultDiv.textContent = '❌ خطأ!';
           clearInterval(timerInterval);
+          loseSound.play();
           retryBtn.style.display = 'inline-block';
         }
       });
@@ -241,10 +231,18 @@
       timeLeft--;
       timerSpan.textContent = timeLeft;
       if (timeLeft === 0) {
-        playLose();
         clearInterval(timerInterval);
         resultDiv.style.color = '#d63031';
         resultDiv.textContent = `⏰ انتهى الوقت! كانت: ${target}`;
+        loseSound.play();
+        retryBtn.style.display = 'inline-block';
+      }
+    }, 1000);
+  }
+</script>
+
+</body>
+</html>     resultDiv.textContent = `⏰ انتهى الوقت! كانت: ${target}`;
         retryBtn.style.display = 'inline-block';
       }
     }, 1000);
