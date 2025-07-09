@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>🎵 لعبة الإيموجي</title>
+  <title>🎮 لعبة الإيموجي</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600&display=swap" rel="stylesheet">
   <style>
     body {
@@ -12,16 +12,14 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: start;
-      height: 100vh;
       margin: 0;
       padding: 10px;
-      user-select: none;
+      height: 100vh;
+      overflow: hidden;
     }
     h1 {
       margin: 10px 0;
       color: #fff;
-      text-shadow: 1px 1px 3px #00000030;
     }
     #startScreen, #gameUI {
       width: 100%;
@@ -34,15 +32,16 @@
       justify-content: center;
       height: 100vh;
     }
-    #startBtn, #retryBtn {
-      padding: 15px 30px;
-      font-size: 1.5rem;
-      background-color: #55efc4;
+    button {
+      padding: 12px 24px;
+      font-size: 1.2rem;
+      margin: 10px;
       border: none;
-      border-radius: 14px;
+      border-radius: 10px;
       cursor: pointer;
-      transition: 0.3s;
-      margin-top: 20px;
+    }
+    #startBtn, #retryBtn {
+      background-color: #55efc4;
     }
     #startBtn:hover, #retryBtn:hover {
       background-color: #00cec9;
@@ -54,27 +53,26 @@
       align-items: center;
     }
     #task {
-      font-size: 1.5rem;
-      background: #ffffff40;
+      font-size: 1.4rem;
+      background: #ffffff50;
       padding: 10px 20px;
       border-radius: 15px;
-      margin: 10px;
-      color: white;
+      color: #fff;
+      margin-bottom: 10px;
     }
     #emojis {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      justify-content: center;
-      margin-bottom: 20px;
-    }
-    .emoji-btn {
-      font-size: 3rem;
-      padding: 20px;
-      border: none;
-      border-radius: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  overflow: visible;
+}
+.emoji-btn {
       background: #ffeaa7;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      font-size: 2.5rem;
+      border: none;
+      border-radius: 12px;
+      padding: 10px;
       cursor: pointer;
       transition: 0.2s;
     }
@@ -84,208 +82,160 @@
     .emoji-btn:active {
       transform: scale(0.9);
     }
-    .emoji-move {
-      animation: wiggle 0.6s ease-in-out infinite alternate;
-    }
-    @keyframes wiggle {
-      0% { transform: translateX(0); }
-      100% { transform: translateX(5px); }
-    }
-    #info {
-      font-size: 1.2rem;
+    #info, #result, #animationNote {
+      margin: 10px 0;
       background: #dfe6e9;
-      padding: 10px 20px;
+      padding: 10px;
       border-radius: 10px;
-      color: #2d3436;
-      margin-bottom: 10px;
-    }
-    #extraMessage {
-      font-size: 1rem;
-      color: white;
-      font-weight: bold;
-      margin-top: 5px;
-      display: none;
+      font-size: 1.1rem;
     }
     #result {
-      font-size: 1.2rem;
-      color: #2d3436;
       font-weight: bold;
+    }
+    .moving {
+      animation: move 1s infinite alternate;
+    }
+    @keyframes move {
+      from { transform: translateY(0); }
+      to { transform: translateY(10px); }
     }
   </style>
 </head>
 <body>
 
-  <div id="startScreen">
-    <h1>🎵 اضغط الإيموجي الصحيح!</h1>
-    <button id="startBtn">ابدأ اللعبة</button>
-  </div>
+<div id="startScreen">
+  <h1>🎯 اضغط الإيموجي الصحيح!</h1>
+  <button id="startBtn">ابدأ اللعبة</button>
+  <button onclick="window.location.href='https://www.youtube.com/watch?v=dQw4w9WgXcQ'" style="background:#ff7675">زر محمد</button>
+</div>
 
-  <div id="gameUI">
-    <h1>المستوى <span id="level">1</span></h1>
-    <div id="task">اضغط على: <span id="targetEmoji"></span></div>
-    <div id="emojis"></div>
-    <div id="info">⏱ الوقت: <span id="timer">5</span> | ⭐ النقاط: <span id="score">0</span></div>
-    <div id="extraMessage">✨ تم إضافة حركة الإيموجيز!</div>
-    <div id="result"></div>
-    <button id="retryBtn">🔄 إعادة المحاولة</button>
-  </div>
+<div id="gameUI">
+  <h1>المستوى <span id="level">1</span></h1>
+  <div id="task">اضغط على: <span id="targetEmoji"></span></div>
+  <div id="animationNote"></div>
+  <div id="emojis"></div>
+  <div id="info">⏱ الوقت: <span id="timer">5</span> | ⭐ النقاط: <span id="score">0</span></div>
+  <div id="result"></div>
+  <button id="retryBtn" style="display:none">🔄 إعادة المحاولة</button>
+  <select id="levelSelect"></select>
+</div>
 
-  <audio id="winSound" src="win.mp3" preload="auto"></audio>
-  <audio id="loseSound" src="lose.mp3" preload="auto"></audio>
+<audio id="winSound" src="win.mp3"></audio>
+<audio id="loseSound" src="lose.mp3"></audio>
 
-<script defer>
-  const emojiGroups = {
-    easy: ['😀','😂','😎','👻','🍕','⚽','🎮','🚀','🌈','🍩'],
-    medium: ['🐶','🐕','🐩','🐾','🐱','🐈','😺','🐵','🐸','🐷'],
-    hard: ['🌝','🌞','🌚','🌕','🌙','🍎','🍏','🍐','👨‍🦰','👨‍🦱','👨‍🦲','👨‍🦳']
-  };
+<script>
+const emojis = ['🐶','🐕','🐩','🦮','🐕‍🦺','😺','😸','😹','😻','😼','😽','🙀','😿','😾','🐱','🦊','🦁','🐯','🐵','🐒','🦍','🦧','👻','🤖','💀','☠️','🎃'];
+let level = 1, score = 0, target = '', timerInterval, timeLeft = 5, clickable = true;
 
-  let target = '', timeLeft = 5, score = 0, level = 1, timerInterval;
+const startBtn = document.getElementById('startBtn');
+const retryBtn = document.getElementById('retryBtn');
+const levelSpan = document.getElementById('level');
+const targetEmojiSpan = document.getElementById('targetEmoji');
+const emojisDiv = document.getElementById('emojis');
+const timerSpan = document.getElementById('timer');
+const scoreSpan = document.getElementById('score');
+const resultDiv = document.getElementById('result');
+const startScreen = document.getElementById('startScreen');
+const gameUI = document.getElementById('gameUI');
+const levelSelect = document.getElementById('levelSelect');
+const winSound = document.getElementById('winSound');
+const loseSound = document.getElementById('loseSound');
+const animationNote = document.getElementById('animationNote');
 
-  const startScreen = document.getElementById('startScreen');
-  const gameUI = document.getElementById('gameUI');
-  const startBtn = document.getElementById('startBtn');
-  const levelSpan = document.getElementById('level');
-  const targetEmojiSpan = document.getElementById('targetEmoji');
-  const emojisDiv = document.getElementById('emojis');
-  const timerSpan = document.getElementById('timer');
-  const scoreSpan = document.getElementById('score');
-  const resultDiv = document.getElementById('result');
-  const retryBtn = document.getElementById('retryBtn');
-  const extraMessage = document.getElementById('extraMessage');
+startBtn.onclick = () => {
+  startScreen.style.display = 'none';
+  gameUI.style.display = 'flex';
+  score = 0;
+  level = 1;
+  updateLevelSelect();
+  startRound();
+};
 
-  const winSound = document.getElementById('winSound');
-  const loseSound = document.getElementById('loseSound');
+retryBtn.onclick = () => {
+  score = 0;
+  level = 1;
+  updateLevelSelect();
+  startRound();
+};
 
-  startBtn.addEventListener('click', () => {
-    winSound.play().then(() => winSound.pause());
-    loseSound.play().then(() => loseSound.pause());
+levelSelect.onchange = () => {
+  level = parseInt(levelSelect.value);
+  startRound();
+};
 
-    startScreen.style.display = 'none';
-    gameUI.style.display = 'flex';
-    score = 0;
-    level = 1;
-    scoreSpan.textContent = score;
-    levelSpan.textContent = level;
-    startRound();
-  });
-
-  retryBtn.addEventListener('click', () => {
-    score = 0;
-    level = 1;
-    scoreSpan.textContent = score;
-    levelSpan.textContent = level;
-    startRound();
-  });
-
-  function getEmojiPool() {
-    if (level < 3) return emojiGroups.easy;
-    if (level < 5) return emojiGroups.easy.concat(emojiGroups.medium);
-    return emojiGroups.easy.concat(emojiGroups.medium, emojiGroups.hard);
+function updateLevelSelect() {
+  levelSelect.innerHTML = '';
+  for (let i = 1; i <= 100; i++) {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = `المرحلة ${i}`;
+    if (i === level) opt.selected = true;
+    levelSelect.appendChild(opt);
   }
+}
 
-  function getNumberOfChoices() {
-    return 4 + level; // لا حد أقصى
-  }
+function startRound() {
+  retryBtn.style.display = 'none';
+  resultDiv.textContent = '';
+  animationNote.textContent = '';
+  emojisDiv.innerHTML = '';
+  levelSpan.textContent = level;
+  scoreSpan.textContent = score;
+  timeLeft = 5;
+  timerSpan.textContent = timeLeft;
+  clickable = true;
 
-  function getRandomEmojis(exclude, count) {
-    let pool = getEmojiPool().filter(e => e !== exclude);
-    let selected = [];
-    while (selected.length < count - 1) {
-      let rand = pool[Math.floor(Math.random() * pool.length)];
-      if (!selected.includes(rand)) selected.push(rand);
+  const count = Math.min(3 + level, emojis.length);
+  const shuffled = emojis.slice().sort(() => 0.5 - Math.random()).slice(0, count);
+  target = shuffled[Math.floor(Math.random() * shuffled.length)];
+  targetEmojiSpan.textContent = target;
+
+  let size = Math.max(3.5 - count * 0.1, 1.5);
+  shuffled.forEach(e => {
+    const btn = document.createElement('button');
+    btn.className = 'emoji-btn';
+    btn.textContent = e;
+    btn.style.fontSize = `${size}rem`;
+    if (level >= 15 && level <= 20) {
+      btn.classList.add('moving');
+      animationNote.textContent = '⚠️ تم إضافة حركة الإيموجيز!';
     }
-    selected.push(exclude);
-    return shuffle(selected);
-  }
-
-  function shuffle(arr) {
-    for (let i = arr.length -1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
-  }
-
-  function disableAllButtons() {
-    const buttons = document.querySelectorAll('.emoji-btn');
-    buttons.forEach(btn => {
-      btn.disabled = true;
-      btn.style.opacity = '0.5';
-      btn.style.cursor = 'not-allowed';
-    });
-  }
-
-  function startRound() {
-    retryBtn.style.display = 'none';
-    resultDiv.textContent = '';
-    timeLeft = 5;
-    timerSpan.textContent = timeLeft;
-
-    extraMessage.style.display = (level >= 15 && level <= 20) ? 'block' : 'none';
-
-    let emojiPool = getEmojiPool();
-    target = emojiPool[Math.floor(Math.random() * emojiPool.length)];
-    targetEmojiSpan.textContent = target;
-
-    emojisDiv.innerHTML = '';
-    let count = getNumberOfChoices();
-    let choices = getRandomEmojis(target, count);
-    let size = 4.5 - (count - 4) * 0.25;
-    size = Math.max(size, 1.5);
-
-    choices.forEach(e => {
-      const btn = document.createElement('button');
-      btn.className = 'emoji-btn';
-      if (level >= 15 && level <= 20) {
-        btn.classList.add('emoji-move');
-      }
-      btn.textContent = e;
-      btn.style.fontSize = `${size}rem`;
-      btn.style.padding = `${10 + (size * 2)}px`;
-      btn.addEventListener('click', () => {
-        if (e === target) {
-          winSound.currentTime = 0;
-          winSound.play();
-          score++;
-          scoreSpan.textContent = score;
-          resultDiv.style.color = '#2ecc71';
-          resultDiv.textContent = '👏 صحيح!';
-          clearInterval(timerInterval);
-          if (score % 3 === 0) {
-            level++;
-            levelSpan.textContent = level;
-          }
-          setTimeout(startRound, 800);
-        } else {
-          loseSound.currentTime = 0;
-          loseSound.play();
-          resultDiv.style.color = '#d63031';
-          resultDiv.textContent = '❌ خطأ!';
-          clearInterval(timerInterval);
-          retryBtn.style.display = 'inline-block';
-          disableAllButtons();
-        }
-      });
-      emojisDiv.appendChild(btn);
-    });
-
-    clearInterval(timerInterval);
-    timerInterval = setInterval(() => {
-      timeLeft--;
-      timerSpan.textContent = timeLeft;
-      if (timeLeft === 0) {
+    btn.onclick = () => {
+      if (!clickable) return;
+      clickable = false;
+      if (e === target) {
+        score++;
+        resultDiv.textContent = '✅ صحيح!';
+        resultDiv.style.color = 'green';
+        winSound.play();
         clearInterval(timerInterval);
-        loseSound.currentTime = 0;
+        if (score % 3 === 0) level++;
+        setTimeout(startRound, 700);
+      } else {
+        resultDiv.textContent = `❌ خطأ! كان المطلوب: ${target}`;
+        resultDiv.style.color = 'red';
         loseSound.play();
-        resultDiv.style.color = '#d63031';
-        resultDiv.textContent = `⏰ انتهى الوقت! كانت: ${target}`;
+        clearInterval(timerInterval);
         retryBtn.style.display = 'inline-block';
-        disableAllButtons();
       }
-    }, 1000);
-  }
-</script>
+    };
+    emojisDiv.appendChild(btn);
+  });
 
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    timerSpan.textContent = timeLeft;
+    if (timeLeft === 0) {
+      clearInterval(timerInterval);
+      resultDiv.textContent = `⏰ انتهى الوقت! كان المطلوب: ${target}`;
+      resultDiv.style.color = 'red';
+      loseSound.play();
+      retryBtn.style.display = 'inline-block';
+      clickable = false;
+    }
+  }, 1000);
+}
+</script>
 </body>
 </html>
